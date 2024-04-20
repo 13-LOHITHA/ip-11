@@ -1,0 +1,92 @@
+<?php
+// Database connection parameters
+$servername = "localhost";
+$username = "username";
+$password = "password";
+$database = "your_database";
+
+// Create connection
+$conn = new mysqli($servername, $username, $password, $database);
+
+// Check connection
+if ($conn->connect_error) {
+    die("Connection failed: " . $conn->connect_error);
+}
+
+// Define variables and initialize with empty values
+$name = $email = $datetime = "";
+$nameErr = $emailErr = $datetimeErr = "";
+$success_message = "";
+
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    // Validate name
+    if (empty($_POST["name"])) {
+        $nameErr = "Name is required";
+    } else {
+        $name = test_input($_POST["name"]);
+    }
+
+    // Validate email
+    if (empty($_POST["email"])) {
+        $emailErr = "Email is required";
+    } else {
+        $email = test_input($_POST["email"]);
+        // Check if email address is well-formed
+        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            $emailErr = "Invalid email format";
+        }
+    }
+
+    // Validate datetime
+    if (empty($_POST["datetime"])) {
+        $datetimeErr = "Date and time are required";
+    } else {
+        $datetime = test_input($_POST["datetime"]);
+    }
+
+    // If all fields are valid, insert data into database
+    if (empty($nameErr) && empty($emailErr) && empty($datetimeErr)) {
+        $sql = "INSERT INTO appointments (name, email, datetime) VALUES ('$name', '$email', '$datetime')";
+        if ($conn->query($sql) === TRUE) {
+            $success_message = "Appointment successfully scheduled";
+        } else {
+            $success_message = "Error: " . $sql . "<br>" . $conn->error;
+        }
+    }
+}
+
+function test_input($data) {
+    $data = trim($data);
+    $data = stripslashes($data);
+    $data = htmlspecialchars($data);
+    return $data;
+}
+
+$conn->close();
+?>
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Appointment Form</title>
+</head>
+<body>
+
+<h2>Appointment Form</h2>
+<form method="post" action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]);?>">
+    Name: <input type="text" name="name">
+    <span class="error"><?php echo $nameErr;?></span>
+    <br><br>
+    Email: <input type="text" name="email">
+    <span class="error"><?php echo $emailErr;?></span>
+    <br><br>
+    Preferred Date/Time: <input type="datetime-local" name="datetime">
+    <span class="error"><?php echo $datetimeErr;?></span>
+    <br><br>
+    <input type="submit" name="submit" value="Submit">
+</form>
+
+<?php echo $success_message; ?>
+
+</body>
+</html>
